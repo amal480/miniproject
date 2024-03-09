@@ -1,41 +1,8 @@
-﻿/*using System;
-using System.Net;
-using System.Net.Mail;
-using System.Threading.Tasks;
-
-namespace SendEmailWithGoogleSMTP
-{
-    class Program
-    {
-        static void Main(string[] args)
-        {
-            string fromMail = "";
-            string fromPassword = "";
-
-            MailMessage message = new MailMessage();
-            message.From = new MailAddress(fromMail);
-            message.Subject = "Test Subject";
-            message.To.Add(new MailAddress(""));
-            message.Body = "<html><body> Test Body </body></html>";
-            message.IsBodyHtml = true;
-
-            var smtpClient = new SmtpClient("smtp.gmail.com")
-            {
-                Port = 587,
-                Credentials = new NetworkCredential(fromMail, fromPassword),
-                EnableSsl = true,
-            };
-
-            smtpClient.Send(message);
-        }
-    }
-}*/
-
-
-
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using System;
+using System.Net;
 using System.Net.Http;
+using System.Net.Mail;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -71,21 +38,31 @@ class Program
 
                     JObject array = JObject.Parse(responseContent);
                     JArray contents = (JArray)array["content"];
-                    string name = (string)contents[0]["message"];66
-                    Console.WriteLine(name);
-
-
-
-                    // Access and print each element of the array
-                    /*Console.WriteLine("Elements of the array:");
-                    foreach (var element in array)
+                    foreach (var element in contents)
                     {
-                        Console.WriteLine(element);
-                    }*/
+                    string name = (string)element["subject"];
+                    Console.WriteLine(name+"\n");
 
-                    //contentType = response.ContentType;
-                    //Console.WriteLine("Response: " + responseContent);
-                    //Console.WriteLine($"{responseContent}\n");
+                        string fromMail = "amalm292003@gmail.com";
+                        string fromPassword = "hais nifb ddkm rzrh";
+
+                        MailMessage message = new MailMessage();
+                        message.From = new MailAddress(fromMail);
+                        message.Subject = name;
+                        message.To.Add(new MailAddress("amalmohan480@gmail.com"));
+                        message.Body = "<html><body> Test Body </body></html>";
+                        message.IsBodyHtml = true;
+
+                        var smtpClient = new SmtpClient("smtp.gmail.com")
+                        {
+                            Port = 587,
+                            Credentials = new NetworkCredential(fromMail, fromPassword),
+                            EnableSsl = true,
+                        };
+
+                        smtpClient.Send(message);
+
+                    }
                 }
                 else
                 {
