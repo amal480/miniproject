@@ -4,8 +4,12 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Mail;
 using System.Text;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
+using System.IdentityModel.Tokens.Jwt;
+using Newtonsoft.Json;
+using miniproject;
 
 class Program
 {
@@ -30,122 +34,40 @@ class Program
                 // Send the POST request and await the response
                 HttpResponseMessage response = await client.PostAsync(url, content);
 
-                // Check if the response is successful (status code 200-299)
+                // Check if the response is successful
                 if (response.IsSuccessStatusCode)
                 {
                     // Read the response content as a string
                     string responseContent = await response.Content.ReadAsStringAsync();
 
+                    string path = @"C:\Users\mohan\Documents\MyTest.txt";
+                    if (!File.Exists(path))
+                    {
+                        File.WriteAllText(path, responseContent);
+                    }
+
+
+                    string currentHash = CalculateHash(responseContent);
+                    Console.WriteLine(currentHash);
+
+                    string readText = File.ReadAllText(path);
+                    string oldHash = CalculateHash(readText);
+                    Console.WriteLine(oldHash);
+
+                    var newdata=JsonConvert.DeserializeObject<Datamodel>(responseContent);
+                    var olddata = JsonConvert.DeserializeObject<Datamodel>(readText);
+                    Console.WriteLine(newdata.content[0].subject);
+
+                    if(currentHash!= oldHash)
+                    {
+
+                    }
+
                     //JArray array = JArray.Parse(responseContent);
 
                     JObject array = JObject.Parse(responseContent);
                     JArray contents = (JArray)array["content"];
-                    foreach (var element in contents)
-                    {
-                        string name = (string)element["subject"];
-                        if (name.Contains("S1"))
-                        {
-
-                            using (SqlConnection connection = new SqlConnection(connectionString))
-                            {
-                                try
-                                {
-                                    // Open the connection
-                                    connection.Open();
-
-                                    string sql = "SELECT email FROM student WHERE sem='S6'";
-
-                                    // Connection opened successfully, you can execute queries here
-
-                                    Console.WriteLine("Connection to SQL Express server successful.");
-
-
-                                    //string query = "SELECT * FROM student"; // Modify this query to match your table
-
-                                    // Create a SqlCommand object
-                                    using (SqlCommand command = new SqlCommand(sql, connection))
-                                    {
-                                        // Execute the query
-                                        using (SqlDataReader reader = command.ExecuteReader())
-                                        {
-                                            // Check if the SqlDataReader has rows
-                                            if (reader.HasRows)
-                                            {
-                                                // Loop through the rows
-                                                while (reader.Read())
-                                                {
-                                                    // Access columns by index or column name
-                                                    //int id = reader.GetInt32(0); // Assuming the first column is an integer
-                                                    string mail = reader.GetString(0); // Assuming the second column is a string
-
-                                                    // Print or process fetched data
-                                                    Console.WriteLine($" Name: {mail}");
-
-                                                    Console.WriteLine(name + "\n");
-
-                                                    string fromMail = "amalm292003@gmail.com";
-                                                    string fromPassword = "hais nifb ddkm rzrh";
-
-                                                    MailMessage message = new MailMessage();
-                                                    message.From = new MailAddress(fromMail);
-                                                    message.Subject = name;
-                                                    message.To.Add(new MailAddress(mail));
-                                                    message.Body = "<html><body> Test Body </body></html>";
-                                                    message.IsBodyHtml = true;
-
-                                                    var smtpClient = new SmtpClient("smtp.gmail.com")
-                                                    {
-                                                        Port = 587,
-                                                        Credentials = new NetworkCredential(fromMail, fromPassword),
-                                                        EnableSsl = true,
-                                                    };
-
-                                                    smtpClient.Send(message);
-
-                                                }
-                                            }
-                                            else
-                                            {
-                                                Console.WriteLine("No rows found.");
-                                            }
-                                        }
-
-
-
-
-                                    }
-
-                                    Console.WriteLine("Data fetched successfully.");
-                                }
-                                catch (Exception ex)
-                                {
-                                    Console.WriteLine("Error connecting to SQL Express server: " + ex.Message);
-                                }
-                            }
-
-                            /*Console.WriteLine(name + "\n");
-
-                            string fromMail = "amalm292003@gmail.com";
-                            string fromPassword = "hais nifb ddkm rzrh";
-
-                            MailMessage message = new MailMessage();
-                            message.From = new MailAddress(fromMail);
-                            message.Subject = name;
-                            message.To.Add(new MailAddress("amalmohan480@gmail.com"));
-                            message.Body = "<html><body> Test Body </body></html>";
-                            message.IsBodyHtml = true;
-
-                            var smtpClient = new SmtpClient("smtp.gmail.com")
-                            {
-                                Port = 587,
-                                Credentials = new NetworkCredential(fromMail, fromPassword),
-                                EnableSsl = true,
-                            };
-
-                            smtpClient.Send(message);*/
-
-                        }
-                    }
+                    //foreach
                 }
                 else
                 {
@@ -156,6 +78,20 @@ class Program
             {
                 Console.WriteLine("Exception: " + ex.Message);
             }
+        }
+    }
+
+    static string CalculateHash(string input)
+    {
+        using (SHA256 sha256Hash = SHA256.Create())
+        {
+            byte[] data = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(input));
+            StringBuilder builder = new StringBuilder();
+            for (int i = 0; i < data.Length; i++)
+            {
+                builder.Append(data[i].ToString("x2"));
+            }
+            return builder.ToString();
         }
     }
 }
